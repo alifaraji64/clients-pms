@@ -1,0 +1,1 @@
+__NUXT_JSONP__("/invoices/create", {data:[{}],fetch:[],mutations:[]});
