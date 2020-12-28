@@ -31,19 +31,10 @@
       },
 
       methods: {
-          // proceedToSignIn(){
-          //   console.log(this.userData)
-          //   this.$store.commit('authentication/checkAuthentication', this.userData)
-          //   if(this.authenticatedUser){
-          //     this.$router.push('/')
-          //   }else{
-          //     alert('You are not authenticated')
-          //   }
-          // }
           async login(){
             try{
               let res = await this.$fire.auth.signInWithEmailAndPassword(this.userData.email, this.userData.password);
-              this.$router.push('/')
+              this.$router.push('/clients')
             }
             catch(e){
               let errorField = document.querySelector('#error_msg');

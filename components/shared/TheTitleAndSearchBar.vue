@@ -22,12 +22,6 @@
           <nuxt-link
             class="btn btn-outline-secondary"
             role="button"
-            style="margin: 0 10px 0 0"
-            :to="listPath"
-            ><i class="fa fa-list-alt"></i></nuxt-link
-          ><nuxt-link
-            class="btn btn-outline-secondary"
-            role="button"
             :to="createPath"
             ><i class="fa fa-plus"></i
           ></nuxt-link>

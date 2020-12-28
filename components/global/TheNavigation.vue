@@ -1,7 +1,7 @@
 <template>
   <b-navbar toggleable="md" type="light">
     <b-navbar-brand>
-      <nuxt-link to="/">
+      <nuxt-link to="/clients">
         <img src="../../assets/img/emblem.png" style="height: 45px" />
       </nuxt-link>
     </b-navbar-brand>

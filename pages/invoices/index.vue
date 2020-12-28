@@ -1,12 +1,36 @@
 <template>
   <div id="invoices-page">
     <TheNavigation />
-
-    <TheTitleAndSearchBar
-      pageName="Invoices"
-      listPath="/invoices"
-      createPath="/invoices/create"
-    />
+    <nav style="background: #e8e8e8; margin-bottom: 25px">
+    <div class="container-fluid">
+      <div class="row" style="padding-top: 5px; padding-bottom: 5px">
+        <div class="col-12 col-sm-6 col-md-6">
+          <label class="col-form-label text-secondary">clients</label>
+        </div>
+        <div
+          class="col-12 col-sm-6 col-md-6 d-flex d-sm-flex d-xl-flex justify-content-end justify-content-sm-end justify-content-xl-end"
+        >
+          <div class="input-group" style="margin: 0 10px 0 0">
+            <div class="input-group-prepend">
+              <span class="input-group-text">Search</span>
+            </div>
+            <input class="form-control" type="text" v-model="search" placeholder="search by name"/>
+            <div class="input-group-append">
+              <button class="btn btn-secondary" type="button">
+                <i class="fa fa-search"></i>
+              </button>
+            </div>
+          </div>
+          <nuxt-link
+            class="btn btn-outline-secondary"
+            role="button"
+            to="/invoices/create"
+            ><i class="fa fa-plus"></i
+          ></nuxt-link>
+        </div>
+      </div>
+    </div>
+    </nav>
 
     <div class="page-content">
       <div class="container-fluid">
@@ -25,7 +49,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(invoice, index) in invoices" :key="index">
+                  <tr v-for="(invoice, index) in filteredInvoices" :key="index">
                     <td>{{ invoice.number }}</td>
                     <td>{{ invoice.customer }}</td>
                     <td
@@ -51,19 +75,22 @@
 
 <script>
 import TheNavigation from "@/components/global/TheNavigation";
-import TheTitleAndSearchBar from "@/components/shared/TheTitleAndSearchBar";
 import TheFooter from "@/components/global/TheFooter";
 
-import { mapState } from "vuex";
 export default {
-  components: { TheNavigation, TheTitleAndSearchBar, TheFooter },
-  computed: {
-    ...mapState({}),
-  },
+  components: { TheNavigation, TheFooter },
   data() {
     return {
-      invoices:[]
+      invoices:[],
+      search:''
     };
+  },
+  computed: {
+    filteredInvoices(){
+      return this.invoices.filter(invoice=>{
+        return invoice.customer.includes(this.search)
+      })
+    }
   },
   methods:{
     async deleteInvoice(id,index){
