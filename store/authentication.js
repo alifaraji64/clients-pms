@@ -12,7 +12,5 @@ export const actions = {
 }
 
 export const getters = {
-  getLoginState: (state) => {
-    return state.loggedIn
-  }
+
 }

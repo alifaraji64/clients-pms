@@ -57,26 +57,26 @@ export default {
   components: {TheFooter, TheTitleAndSearchBar, TheNavigation},
   computed: {
     ...mapState({
-      invoices: state => state.invoices.list,
-      authenticatedUser: state =>state.authentication.loggedIn
-    })
-  },
 
-  created() {
-    if(!this.authenticatedUser){
-      //this.$router.push('/login')
-    }
+    })
   },
 
   methods: {
     dueInvoices() {
-      let dueInvoices = this.invoices.filter(inv => parseFloat(inv.due) > 0)
-      return dueInvoices.length
+      //let dueInvoices = this.invoices.filter(inv => parseFloat(inv.due) > 0)
+      //return dueInvoices.length
     },
 
     paidInvoices() {
-      let paidInvoices = this.invoices.filter(inv => parseFloat(inv.due) === 0)
-      return paidInvoices.length
+      //let paidInvoices = this.invoices.filter(inv => parseFloat(inv.due) === 0)
+      //return paidInvoices.length
+    }
+  },
+    middleware({ store, redirect }) {
+      console.log(store.$fire.auth);
+    //redirect to login if user is not logged in
+    if(!store.$fire.auth.currentUser){
+      return redirect('/login')
     }
   }
 }

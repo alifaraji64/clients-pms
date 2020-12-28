@@ -3,11 +3,10 @@
     <TheNavigation />
 
     <TheTitleAndSearchBar
-      pageName="New Client"
-      listPath="/clients"
+      pageName="Edit client"
+      listPath="/clients/edit"
       createPath="/clients/create"
     />
-
     <div class="page-content">
       <div class="container" style="text-align: center">
         <div
@@ -16,7 +15,7 @@
           id="result_msg"
           v-if="success"
         >
-          Client added Successfully
+          Client updated Successfully
         </div>
         <div class="row">
           <div class="col-md-12">
@@ -27,7 +26,7 @@
                     <input
                       class="form-control"
                       type="text"
-                      v-model="client.nid"
+                      v-model="clientData.nid"
                       placeholder="National Id(NID)"
                       required
                     />
@@ -42,7 +41,7 @@
                       class="form-control"
                       type="text"
                       placeholder="Name"
-                      v-model="client.name"
+                      v-model="clientData.name"
                       required
                     />
                   </div>
@@ -52,7 +51,7 @@
                     <input
                       class="form-control"
                       type="email"
-                      v-model="client.email"
+                      v-model="clientData.email"
                       placeholder="Email"
                       required
                     />
@@ -65,7 +64,7 @@
                     <input
                       class="form-control"
                       type="tel"
-                      v-model="client.phone"
+                      v-model="clientData.phone"
                       placeholder="Phone"
                       required
                     />
@@ -76,7 +75,7 @@
                     <input
                       class="form-control"
                       type="tel"
-                      v-model="client.mobile"
+                      v-model="clientData.mobile"
                       placeholder="Mobile"
                       required
                     />
@@ -88,7 +87,7 @@
                   <div class="form-group">
                     <textarea
                       class="form-control"
-                      v-model="client.address"
+                      v-model="clientData.address"
                       placeholder="Address"
                       required
                     ></textarea>
@@ -96,7 +95,7 @@
                 </div>
                 <div class="col">
                   <div class="form-group">
-                    <select class="form-control" v-model="client.gender">
+                    <select class="form-control" v-model="clientData.gender">
                       <option value="" selected="">Select Gendre</option>
                       <option value="male">Male</option>
                       <option value="female">Female</option>
@@ -107,9 +106,9 @@
               <div class="form-row">
                 <button
                   class="btn btn-success btn-lg"
-                  @click.prevent="addClient"
+                  @click.prevent="updateClient"
                 >
-                  Save
+                  Update
                 </button>
               </div>
             </form>
@@ -133,31 +132,32 @@ export default {
 
   computed: {
     ...mapState({
-      clients: (state) => state.clients.list,
+      clientData: (state) =>
+        JSON.parse(JSON.stringify(state.clients.clientDataForEdit)),
     }),
   },
 
   data() {
     return {
-      client: {
-        nid: "",
-        name: "",
-        email: "",
-        phone: "",
-        mobile: "",
-        address: "",
-        gender: "",
-      },
       success: false,
     };
   },
 
   methods: {
-    async addClient() {
-      const result_msg = document.querySelector("#result_msg");
-      const { nid, name, email, phone, mobile, address, gender } = this.client;
+    async updateClient() {
+      this.success = false;
+      const {
+        nid,
+        name,
+        email,
+        phone,
+        mobile,
+        address,
+        gender,
+        id,
+      } = this.clientData;
       try {
-        let res = await this.$fire.firestore.collection("clients").add({
+        await this.$fire.firestore.collection("clients").doc(id).update({
           nid,
           name,
           email,
@@ -166,19 +166,8 @@ export default {
           address,
           gender,
         });
-        //display success msg
         this.success = true;
-        //clearing the inputs
-        this.client.nid = "";
-        this.client.name = "";
-        this.client.email = "";
-        this.client.phone = "";
-        this.client.mobile = "";
-        this.client.address = "";
-        this.client.gender = "";
       } catch (e) {
-        result_msg.innerHTML = "error occured";
-        result_msg.style.color = "rgb(240, 53, 53)";
         console.log(e);
       }
     },
@@ -189,6 +178,7 @@ export default {
       return redirect("/login");
     }
   },
+  mounted() {},
 };
 </script>
 
