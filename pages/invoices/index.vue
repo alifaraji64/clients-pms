@@ -44,8 +44,10 @@
                     <th>Client</th>
                     <th>Due Date</th>
                     <th>Amount</th>
+                    <th>Fine</th>
                     <th>Balance</th>
                     <th>Delete</th>
+                    <th>Edit</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -53,13 +55,15 @@
                     <td>{{ invoice.number }}</td>
                     <td>{{ invoice.customer }}</td>
                     <td
-                      :class="invoice.paymentStatus === 'missed' ? 'text-danger' : ''"
+                      :class="invoiceOutdated(invoice.dueDate) ? 'text-danger font-weight-bold' : ''"
                     >
                       {{ invoice.dueDate }}
                     </td>
                     <td>{{ invoice.amount }}</td>
+                    <td></td>
                     <td>{{ invoice.balance }}</td>
                     <td><button class="btn btn-danger" @click.prevent="deleteInvoice(invoice.id,index)">Delete</button></td>
+                    <td><button type="button" class="btn btn-info" data-toggle="modal" data-target="#basicModal" @click="editableInvoiceInfo(invoice.id, index, invoice.balance, invoice.customer)">Edit</button></td>
                   </tr>
                 </tbody>
               </table>
@@ -69,6 +73,93 @@
       </div>
     </div>
 
+<!--
+----------------------------------------------
+----------------------------------------------
+MODAL
+----------------------------------------------
+----------------------------------------------
+-->
+<div class="container">
+<!-- basic modal -->
+<div class="modal fade" id="basicModal" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="myModalLabel">Payments</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+              <div class="form-row">
+                <div class="col form-column-shaped">
+                  <div class="table-responsive">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Type</th>
+                          <th>Line Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr
+                        >
+                          <td>
+                            <input
+                              class="form-control"
+                              type="date"
+                              v-model="payment.date"
+                            />
+                          </td>
+                          <td>
+                            <select class="form-control" v-model="payment.transfer">
+                              <option
+                                value="Bank Transfer"
+                              >
+                                Bank Transfer
+                              </option>
+                              <option
+                                value="Cash"
+                              >
+                                Cash
+                              </option>
+                            </select>
+                          </td>
+                          <td>
+                            <input
+                              class="form-control"
+                              type="number"
+                              v-model="payment.amount"
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td></td>
+                          <td></td>
+                          <td></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" @click="savePayment">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!--
+----------------------------------------------
+----------------------------------------------
+----------------------------------------------
+-->
     <TheFooter />
   </div>
 </template>
@@ -82,7 +173,10 @@ export default {
   data() {
     return {
       invoices:[],
-      search:''
+      search:'',
+      amount:0,
+      editableInvoice:{id:'', balance:'', index:'',client:''},
+      payment:{date:'', transfer:'', amount:''}
     };
   },
   computed: {
@@ -90,7 +184,7 @@ export default {
       return this.invoices.filter(invoice=>{
         return invoice.customer.includes(this.search)
       })
-    }
+    },
   },
   methods:{
     async deleteInvoice(id,index){
@@ -102,6 +196,39 @@ export default {
       }
       catch(e){
         console.log(e);
+      }
+    },
+    async savePayment(){
+      //saving the payment in db
+      const {id,balance,index,client} = this.editableInvoice;
+      const {date,transfer,amount} = this.payment;
+      await this.$fire.firestore.collection('payments').add({
+        date,transfer,amount
+      })
+      //edit the balance in invoice in db and local array
+      //get the balance as an integer
+      let updatedBalance = parseInt(balance.split(" ")[1]-amount);
+
+      await this.$fire.firestore.collection('invoices').doc(id).update({
+        balance:`MVR ${updatedBalance}`
+       })
+       //edit the balance from the local array so there is no need to refresh the page
+       this.invoices[index].balance = `MVR ${updatedBalance}`;
+       $('#basicModal').modal('hide');
+    },
+    editableInvoiceInfo(id,index,balance,client){
+      this.editableInvoice.id = id;
+      this.editableInvoice.balance = balance;
+      this.editableInvoice.index = index;
+      this.editableInvoice.client = client;
+    },
+    invoiceOutdated(date){
+      let d = new Date(date);
+      let now = new Date();
+      if(d > now){
+        return false;
+      }else{
+        return true;
       }
     }
   },

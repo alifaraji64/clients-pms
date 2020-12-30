@@ -343,19 +343,15 @@
 import TheNavigation from "@/components/global/TheNavigation";
 import TheTitleAndSearchBar from "@/components/shared/TheTitleAndSearchBar";
 import TheFooter from "@/components/global/TheFooter";
-
 import { mapState } from "vuex";
-
 export default {
   components: { TheNavigation, TheTitleAndSearchBar, TheFooter },
-
   computed: {
     ...mapState({
       invoices: (state) => state.invoices.list,
       //authenticatedUser: state =>state.authentication.loggedIn
     }),
   },
-
   data() {
     return {
       invNumber: "",
@@ -378,8 +374,7 @@ export default {
       clients: [],
     };
   },
-
-  async mounted() {
+  async created() {
     this.invNumber = this.getInvNumber();
     //get the client names for displaying them in
     let res = await this.$fire.firestore.collection("clients").get();
@@ -388,7 +383,6 @@ export default {
         this.clients.push(c.data().name);
       });
   },
-
   methods: {
     getInvNumber() {
       let number =
@@ -396,13 +390,11 @@ export default {
         Math.ceil(new Date().getMilliseconds() * Math.random()).toString();
       return number;
     },
-
     calculateDetailLineTotal() {
       this.detailObj.lineTotal = this.detailObj.rate * this.detailObj.qty;
       this.calculateInvSubTotal();
       this.calculatePaymentTotal();
     },
-
     addNewItemLine() {
       if (this.detailObj.lineTotal > 0) {
         this.detailLines.push(this.detailObj);
@@ -410,7 +402,6 @@ export default {
         this.detailObj = { item: "", rate: "", qty: "", lineTotal: "" };
       }
     },
-
     calculateInvSubTotal() {
       this.invSubTotal = 0;
       this.invoice.total = 0;
@@ -429,7 +420,6 @@ export default {
           parseFloat(this.invoice.total) - parseFloat(this.invoice.paid);
       }
     },
-
     addNewPaymentLine() {
       if (this.paymentObj.lineTotal > 0) {
         this.paymentLines.push(this.paymentObj);
@@ -437,7 +427,6 @@ export default {
         this.paymentObj = { date: "", paymentType: "", lineTotal: 0 };
       }
     },
-
     calculatePaymentTotal() {
       this.invoice.paid = 0;
       if (this.paymentLines.length > 0) {
@@ -452,7 +441,6 @@ export default {
           parseFloat(this.invoice.total) - parseFloat(this.invoice.paid);
       }
     },
-
     async addInvoice() {
       if (
         this.invoice.total > 0 &&
@@ -480,7 +468,6 @@ export default {
           paid: 0,
           due: 0,
         };
-
         this.detailLines = [];
         this.paymentLines = [];
         this.invSubTotal = 0;

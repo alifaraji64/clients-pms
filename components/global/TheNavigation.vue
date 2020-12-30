@@ -1,7 +1,7 @@
 <template>
   <b-navbar toggleable="md" type="light">
     <b-navbar-brand>
-      <nuxt-link to="/clients">
+      <nuxt-link to="/">
         <img src="../../assets/img/emblem.png" style="height: 45px" />
       </nuxt-link>
     </b-navbar-brand>
@@ -17,7 +17,7 @@
           <nuxt-link class="nav-link" to="/invoices">Invoices</nuxt-link>
         </li>
         <li class="nav-item">
-          <nuxt-link class="nav-link" to="#">Payments</nuxt-link>
+          <nuxt-link class="nav-link" to="/add-description">Description</nuxt-link>
         </li>
         <li class="nav-item">
           <button class="btn-primary mt-2 border-none" @click="logout">
