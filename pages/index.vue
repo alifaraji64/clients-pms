@@ -17,23 +17,7 @@
                 </thead>
                 <tbody>
                 <tr>
-                  <td>{{ dueInvoices() }} invoices.</td>
-                </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div class="col">
-            <div class="table-responsive">
-              <table class="table">
-                <thead>
-                <tr>
-                  <th>Month Paid</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                  <td>{{ paidInvoices() }} invoices.</td>
+                  <td>{{ numberOfDueInvoices }} invoices.</td>
                 </tr>
                 </tbody>
               </table>
@@ -55,22 +39,25 @@ import TheFooter from "../components/global/TheFooter";
 import { mapState } from 'vuex'
 export default {
   components: {TheFooter, TheTitleAndSearchBar, TheNavigation},
-  computed: {
-    ...mapState({
-
-    })
-  },
-
-  methods: {
-    dueInvoices() {
-      //let dueInvoices = this.invoices.filter(inv => parseFloat(inv.due) > 0)
-      //return dueInvoices.length
-    },
-
-    paidInvoices() {
-      //let paidInvoices = this.invoices.filter(inv => parseFloat(inv.due) === 0)
-      //return paidInvoices.length
+  data(){
+    return{
+      invoices:[],
+      numberOfDueInvoices:0
     }
+  },
+  async created(){
+    let res = await this.$fire.firestore.collection('invoices').get();
+    res.docs.length && res.docs.forEach(i=>{
+      let id = i.id;
+      this.invoices.push({...i.data(),id});
+    })
+    this.invoices.forEach(i=>{
+      let d = new Date(i.dueDate);
+      let now = new Date();
+      if(d < now){
+        this.numberOfDueInvoices++;
+      }
+    })
   },
     middleware({ store, redirect }) {
       console.log(store.$fire.auth);
@@ -78,7 +65,8 @@ export default {
     if(!store.$fire.auth.currentUser){
       return redirect('/login')
     }
-  }
+  },
+
 }
 </script>
 

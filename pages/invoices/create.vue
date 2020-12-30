@@ -63,7 +63,7 @@
                         <tr>
                           <td>
                             <label><strong>Fine&nbsp;</strong></label
-                            ><label>00.00<small></small></label>
+                            ><label>{{invoice.fine}}<small></small></label>
                             <div>
                               <small
                                 >MVR 5.00 will be added if not paid before 10th
@@ -166,9 +166,10 @@
                                 <option
                                   v-for="(item, index) in items"
                                   :key="index"
-                                  :value="item.name"
+                                  :value="item.name+','+item.fine"
                                 >
-                                  {{ item.name }}
+                                  {{ item.name }}-
+                                  {{ item.fine }}
                                 </option>
                               </optgroup>
                             </select>
@@ -364,11 +365,12 @@ export default {
         total: 0,
         paid: 0,
         due: 0,
+        fine:0,
       },
-      items: [{ name: "item 1" }, { name: "item 2" }, { name: "item 3" }],
+      items: [],
       detailLines: [],
       paymentLines: [],
-      detailObj: { item: "", rate: 0, qty: 0, lineTotal: 0 },
+      detailObj: { item: "", rate: 0, qty: 0, lineTotal: 0,fine:0 },
       paymentObj: { date: "", paymentType: "", lineTotal: 0 },
       invSubTotal: 0,
       clients: [],
@@ -381,6 +383,13 @@ export default {
     res.docs.length &&
       res.docs.forEach((c) => {
         this.clients.push(c.data().name);
+      });
+
+    //get all of the descriptions
+    let res2 = await this.$fire.firestore.collection("descriptions").get();
+    res2.docs.length &&
+      res2.docs.forEach((c) => {
+        this.items.push(c.data());
       });
   },
   methods: {
@@ -396,6 +405,8 @@ export default {
       this.calculatePaymentTotal();
     },
     addNewItemLine() {
+        let fine = this.getFine();
+        this.detailObj.fine = fine;
       if (this.detailObj.lineTotal > 0) {
         this.detailLines.push(this.detailObj);
         this.calculateInvSubTotal();
@@ -421,6 +432,16 @@ export default {
       }
     },
     addNewPaymentLine() {
+      let date = this.paymentObj.date.split("-")[2];
+      //check if it is before the 10th of the month
+      if( date && date[0] == '0' && parseInt(date[1])<11 ){
+        this.detailLines.forEach(i=>{
+          this.invoice.fine += (i.fine * i.qty);
+        })
+        this.invoice.due = parseInt(this.invoice.fine) + parseInt(this.invoice.due);
+        this.invoice.due = this.invoice.due;
+        return false;
+      }
       if (this.paymentObj.lineTotal > 0) {
         this.paymentLines.push(this.paymentObj);
         this.calculatePaymentTotal();
@@ -451,10 +472,16 @@ export default {
         this.invoice.number = this.invNumber;
         this.invoice.amount = "MVR " + this.invoice.total.toString();
         this.invoice.balance = "MVR " + this.invoice.due.toString();
-        const {amount, balance, customer,dueDate,number} = this.invoice;
+        let {amount, balance, customer,dueDate,number, fine, due} = this.invoice;
+        if(fine == 0){
+          this.detailLines.forEach(i=>{
+            this.invoice.fine += (i.fine * i.qty);
+          })
+        }
+        fine = this.invoice.fine;
         //add invoice to firestore
         await this.$fire.firestore.collection('invoices').add({
-          amount,balance,customer,dueDate,number
+          amount,balance,customer,dueDate,number,fine,due,initialFine:fine
         })
         this.$router.push('/invoices');
         this.invoice = {
@@ -467,6 +494,7 @@ export default {
           total: 0,
           paid: 0,
           due: 0,
+          fine: 0
         };
         this.detailLines = [];
         this.paymentLines = [];
@@ -477,6 +505,9 @@ export default {
         console.log("yooo");
       }
     },
+    getFine(){
+      return parseInt(this.detailObj.item.split(',')[1]);
+    }
   },
   middleware({ store, redirect }) {
     //redirect to login if user is not logged in

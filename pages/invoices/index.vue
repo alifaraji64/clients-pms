@@ -60,7 +60,7 @@
                       {{ invoice.dueDate }}
                     </td>
                     <td>{{ invoice.amount }}</td>
-                    <td></td>
+                    <td>{{ invoice.fine }}</td>
                     <td>{{ invoice.balance }}</td>
                     <td><button class="btn btn-danger" @click.prevent="deleteInvoice(invoice.id,index)">Delete</button></td>
                     <td><button type="button" class="btn btn-info" data-toggle="modal" data-target="#basicModal" @click="editableInvoiceInfo(invoice.id, index, invoice.balance, invoice.customer)">Edit</button></td>
@@ -199,22 +199,36 @@ export default {
       }
     },
     async savePayment(){
-      //saving the payment in db
       const {id,balance,index,client} = this.editableInvoice;
       const {date,transfer,amount} = this.payment;
+      //get the balance as an integer
+      let updatedBalance = parseInt(balance.split(" ")[1]-amount);
+      //saving the payment in db
       await this.$fire.firestore.collection('payments').add({
         date,transfer,amount
       })
-      //edit the balance in invoice in db and local array
-      //get the balance as an integer
-      let updatedBalance = parseInt(balance.split(" ")[1]-amount);
+      let date1 = date.split("-")[2];
+      //check if it is before the 10th of the month
+      if( date1 && date1[0] == '0' && parseInt(date1[1])<11 ){
+        this.invoices[index].fine += this.invoices[index].fine;
+        
+        await this.$fire.firestore.collection('invoices').doc(id).update({
+          balance:`MVR ${updatedBalance + parseInt(this.invoices[index].initialFine)}`,
+          fine: this.invoices[index].fine
+        })
 
-      await this.$fire.firestore.collection('invoices').doc(id).update({
+       //edit the balance from the local array so there is no need to refresh the page
+       this.invoices[index].balance = `MVR ${updatedBalance + parseInt(this.invoices[index].initialFine)}`;
+       $('#basicModal').modal('hide');
+      }
+      else{
+        await this.$fire.firestore.collection('invoices').doc(id).update({
         balance:`MVR ${updatedBalance}`
        })
        //edit the balance from the local array so there is no need to refresh the page
        this.invoices[index].balance = `MVR ${updatedBalance}`;
        $('#basicModal').modal('hide');
+      }
     },
     editableInvoiceInfo(id,index,balance,client){
       this.editableInvoice.id = id;
@@ -232,21 +246,19 @@ export default {
       }
     }
   },
-
-  middleware({ store, redirect }) {
-    //redirect to login if user is not logged in
-    if (!store.$fire.auth.currentUser) {
-      return redirect("/login");
-    }
-  },
   async created(){
     let res = await this.$fire.firestore.collection('invoices').get();
     res.docs.length && res.docs.forEach(i=>{
       let id = i.id;
       this.invoices.push({...i.data(),id});
     })
-    console.log(this.invoices);
-  }
+  },
+    middleware({ store, redirect }) {
+    //redirect to login if user is not logged in
+    if (!store.$fire.auth.currentUser) {
+      return redirect("/login");
+    }
+  },
 };
 </script>
 
